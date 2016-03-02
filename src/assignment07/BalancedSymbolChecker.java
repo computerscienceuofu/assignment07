@@ -18,89 +18,96 @@ public class BalancedSymbolChecker {
 	 */
 	public String checkFile(String filename) throws FileNotFoundException 
 	{
-
+		//this checks whether there is a file named "filename"
 		if(new File(filename).isFile() == false)
 		{
 			throw new FileNotFoundException();
 		}
 		
+		//here are the counters for the lines and columns
 		int lineNumber = 0;
 		int colNumber = 0;
 		char symbolRead = ' ';
-		char symbolExpected = ' '; 
+
 		
 		LinkedListStack<Character> stringcheck = new LinkedListStack<Character>();
+		LinkedListStack<Character> symbolexpectedcheck = new LinkedListStack<Character>();
+		
 		
 		File text = new File(filename);
 		Scanner s = new Scanner(text);
 
-
-
+		
+		//While loop starts here
 		while(s.hasNext()) 
 		{
 			String nex = s.nextLine();
 			lineNumber++;
 			colNumber = 0;
+			
+		/*the for loop steps through each character in the current line.  
+		*It then goes back to the while loop and gets another line.
+		*/
 		for(int i = 0; i <= nex.length() - 1; i++)	  
 		{
 			colNumber++;
 			char c = nex.charAt(i);
 
-		    if (c == '/')
+			
+			//Here it checks the comment symbols
+		    if (c == '/' && symbolexpectedcheck.size() == 0)
 		    {
-		    	nex = s.next();
 		    	
-		    	switch(nex)
-		    	{
-		    		case "/":
-		    			s.nextLine();
-		    			lineNumber++;
-		    			colNumber = 0;
-		    			break;
-		    		case "*":
-		    			stringcheck.push('/');
-		    			break;
-		    	}
+		    	stringcheck.push('/');
+		    	symbolexpectedcheck.push('/');
+		    	
 		    }
-		    else if  (c == '*' && stringcheck.peek() == '/')
-		    {		    	
-		    	colNumber++;
-		    			stringcheck.pop();	
-		    			break;
+
+		    else if  (c == '/' && stringcheck.peek() == '/')
+		    {		    			    		
+		    	stringcheck.pop();
+		    	symbolexpectedcheck.pop();
+		    	
+		    	break;
 		    }
-		    
-		    else if (c == '(' || c == '{' || c == '[' && stringcheck.peek() != '/')
+
+		    //Here it checks the start symbol
+		    if (c == '(' || c == '{' || c == '[')
 		    {
 		    	switch(c)
                 {
                     case '(':
                     	stringcheck.push(c);        	
         		    	symbolRead = c;
-        		    	symbolExpected = ')';
+        		    	symbolexpectedcheck.push(')');
         		    	break;
         		    	
                     case '{':
                     	stringcheck.push(c);
         		    	symbolRead = c;
-        		    	symbolExpected = '}';
+        		    	symbolexpectedcheck.push('}');
         		    	break;
         		    	
                     case '[':
                     	stringcheck.push(c);
         		    	symbolRead = c;
-        		    	symbolExpected = ']';
+        		    	symbolexpectedcheck.push(']');
         		    	break;
                     default:
                         break;
                 }
 		    }
 		    
-		    else if (c == ')' || c == '}' || c == ']' && stringcheck.peek() != '/')
+		    
+		    //here it checks the end symbol
+		    if ((c == ')' || c == '}' || c == ']'))
 		    {
+		    		char symbolExpected = symbolexpectedcheck.peek(); 
 	                switch(c)
 	                {
 	                    case ']':
-	                        if (stringcheck.peek() != '[')
+	                   
+	                    	if (stringcheck.peek() != '[')
 	                        {	        
 	                        	symbolRead = c;
 	                    		s.close();
@@ -110,10 +117,12 @@ public class BalancedSymbolChecker {
 	                        {
 	                        	symbolRead = c;
 	                        	stringcheck.pop();
+	                        	symbolexpectedcheck.pop();
 	                        	break;
 	                        }
 	                    case '}':
-	                        if (stringcheck.peek() != '{')
+	                    	
+	                    	if (stringcheck.peek() != '{')
 	                        {
 	                        	symbolRead = c;
 	                    		s.close();
@@ -123,10 +132,12 @@ public class BalancedSymbolChecker {
 	                        {
 	                        	symbolRead = c;
 	                        	stringcheck.pop();
+	                        	symbolexpectedcheck.pop();
 	                        	break;
 	                        }
 	                    case ')':
-	                        if (stringcheck.peek() != '(')
+	                    	
+	                    	if (stringcheck.peek() != '(')
 	                        {
 	                        	symbolRead = c;
 	                    		s.close();
@@ -136,38 +147,40 @@ public class BalancedSymbolChecker {
 	                        {
 	                        	symbolRead = c;
 	                        	stringcheck.pop();
+	                        	symbolexpectedcheck.pop();
 	                        	break;
 	                        }
-	                    default:
-	                        break;
+	                    
 	                }
 	               
 		    }
 		   
-		}
-
 		
 		}
+
+		}
+		//While loop ends here
+		
+		
+		//Checks whether the stack is not empty.  
 		if(!stringcheck.isEmpty())
 		{
+			char symbolExpected = symbolexpectedcheck.peek(); 
 			Character lastString = stringcheck.peek();
 			switch(lastString)
             {
                 case '[': 
                 		symbolRead = '[';
-                    	symbolExpected = ']';
                 		s.close();
                     	return unmatchedSymbolAtEOF(symbolExpected);
                     
                 case '{':       
                 		symbolRead = '{';
-                    	symbolExpected = '}';
                 		s.close();
                     	return unmatchedSymbolAtEOF(symbolExpected);
                     
                 case '(':  
                 		symbolRead = '(';
-                    	symbolExpected = ')';
                 		s.close();
                     	return unmatchedSymbolAtEOF(symbolExpected);  
                 case '/':
@@ -180,7 +193,7 @@ public class BalancedSymbolChecker {
 			
 		}
 		
-		
+		//checks whether the stack is empty.
 		if(stringcheck.isEmpty())
         {
 			s.close();
