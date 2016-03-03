@@ -3,11 +3,12 @@ package assignment07;
 import java.io.*;
 import java.util.Scanner;
 
+
 /**
  * Class containing the checkFile method for checking if the (, [, and { symbols
  * in an input file are correctly matched.
  * 
- * @author ??
+ * @author Chris Murphy && Li Yu
  */
 public class BalancedSymbolChecker {
 
@@ -36,41 +37,72 @@ public class BalancedSymbolChecker {
 		
 		File text = new File(filename);
 		Scanner s = new Scanner(text);
-
+		String nex;
+		int on = 0;
 		
 		//While loop starts here
-		while(s.hasNext()) 
+		while(s.hasNextLine()) 
 		{
-			String nex = s.nextLine();
-			lineNumber++;
-			colNumber = 0;
+		
+				nex = s.nextLine();
+				lineNumber++;
+				colNumber = 0;
+			
 			
 		/*the for loop steps through each character in the current line.  
 		*It then goes back to the while loop and gets another line.
 		*/
-		for(int i = 0; i <= nex.length() - 1; i++)	  
+		for(int i = 0; i < nex.length(); i++)	  
 		{
+			
+			
+			// here it checks for comment lines and quotes, and flips the on switch if it has them
+			if (i + 1 < nex.length ())
+			{
+			if (nex.charAt(i) == '/' && nex.charAt(i+1) == '/')
+			{
+				
+				if(s.hasNextLine())
+				{
+				nex = s.nextLine();
+				lineNumber++;
+				colNumber = 0;
+				i = 0;
+				}
+				
+			}
+			
+			if (nex.charAt(i)  == '/'  && nex.charAt(i + 1) == '*' && on != 1)
+			
+				on = 1;
+			
+			
+			if (nex.charAt(i)  == '*'  && nex.charAt(i + 1) == '/' && on == 1)
+			
+				on = 0;
+			
+			
+			if (nex.charAt(i)  == '"'  && on != 2 ){
+				on = 2;}
+			
+			else
+				if(nex.charAt(i)  == '"'  && on == 2 && (nex.charAt(i-1) != '\\'))
+				{
+					on = 0;
+				}
+				
+			}
+			
+			
+			
+			
 			colNumber++;
 			char c = nex.charAt(i);
-
 			
-			//Here it checks the comment symbols
-		    if (c == '/' && symbolexpectedcheck.size() == 0)
-		    {
-		    	
-		    	stringcheck.push('/');
-		    	symbolexpectedcheck.push('/');
-		    	
-		    }
 
-		    else if  (c == '/' && stringcheck.peek() == '/')
-		    {		    			    		
-		    	stringcheck.pop();
-		    	symbolexpectedcheck.pop();
-		    	
-		    	break;
-		    }
-
+			//Can only check symbols if this equals 0
+			if(on == 0)
+			{
 		    //Here it checks the start symbol
 		    if (c == '(' || c == '{' || c == '[')
 		    {
@@ -83,24 +115,46 @@ public class BalancedSymbolChecker {
         		    	break;
         		    	
                     case '{':
-                    	stringcheck.push(c);
-        		    	symbolRead = c;
-        		    	symbolexpectedcheck.push('}');
-        		    	break;
+                    	if(i+1 < nex.length ())
+                    	{	
+                    		if(nex.charAt(i - 1) == '\'' && (nex.charAt(i+1) == '\''))
+                    		{
+                    		
+                    			break;
+                    		}	
+                    		else
+                        	{
+                        		stringcheck.push(c);
+                		    	symbolRead = c;
+                		    	symbolexpectedcheck.push('}');
+                		    	break;
+                        	}
+                    	}
+                    	else
+                    	{
+                    		stringcheck.push(c);
+            		    	symbolRead = c;
+            		    	symbolexpectedcheck.push('}');
+            		    	break;
+                    	}
         		    	
                     case '[':
                     	stringcheck.push(c);
         		    	symbolRead = c;
         		    	symbolexpectedcheck.push(']');
         		    	break;
+      
+        		   
+        		    	
                     default:
                         break;
                 }
 		    }
-		    
-		    
+			
 		    //here it checks the end symbol
-		    if ((c == ')' || c == '}' || c == ']'))
+		    if (stringcheck.isEmpty() == false)
+		    {		    	
+		    if (c == ')' || c == '}' || c == ']')
 		    {
 		    		char symbolExpected = symbolexpectedcheck.peek(); 
 	                switch(c)
@@ -110,6 +164,7 @@ public class BalancedSymbolChecker {
 	                    	if (stringcheck.peek() != '[')
 	                        {	        
 	                        	symbolRead = c;
+	                        	symbolexpectedcheck.push(c);
 	                    		s.close();
 	                            return unmatchedSymbol(lineNumber, colNumber, symbolRead, symbolExpected);
 	                        }
@@ -122,7 +177,7 @@ public class BalancedSymbolChecker {
 	                        }
 	                    case '}':
 	                    	
-	                    	if (stringcheck.peek() != '{')
+	                    	if (stringcheck.peek() != '{' )
 	                        {
 	                        	symbolRead = c;
 	                    		s.close();
@@ -150,9 +205,12 @@ public class BalancedSymbolChecker {
 	                        	symbolexpectedcheck.pop();
 	                        	break;
 	                        }
-	                    
+
 	                }
-	               
+
+	                }
+		    }
+
 		    }
 		   
 		
@@ -160,7 +218,20 @@ public class BalancedSymbolChecker {
 
 		}
 		//While loop ends here
+	
+			
 		
+		if(on == 1)
+		{
+			s.close();
+    		return unfinishedComment();
+		}
+		
+		if (on == 2)
+		{
+			s.close();
+			return allSymbolsMatch();
+		}
 		
 		//Checks whether the stack is not empty.  
 		if(!stringcheck.isEmpty())
@@ -183,22 +254,22 @@ public class BalancedSymbolChecker {
                 		symbolRead = '(';
                 		s.close();
                     	return unmatchedSymbolAtEOF(symbolExpected);  
-                case '/':
-                	
-            		s.close();
-                		return unfinishedComment();
+
                 default:
                     break;
             }
 			
 		}
+
 		
 		//checks whether the stack is empty.
-		if(stringcheck.isEmpty())
+		if(stringcheck.isEmpty() && symbolexpectedcheck.isEmpty())
         {
 			s.close();
 			return allSymbolsMatch();
         }
+		
+		
 
 		s.close();
 		return filename;
