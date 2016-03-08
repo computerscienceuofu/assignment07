@@ -38,9 +38,11 @@ public class BalancedSymbolChecker {
 		File text = new File(filename);
 		Scanner s = new Scanner(text);
 		String nex;
+		char symbolExpected = 0;
 		int on = 0;
 		
 		//While loop starts here
+		
 		while(s.hasNextLine()) 
 		{
 		
@@ -54,172 +56,127 @@ public class BalancedSymbolChecker {
 		*/
 		for(int i = 0; i < nex.length(); i++)	  
 		{
-			
-			
-			// here it checks for comment lines and quotes, and flips the on switch if it has them
-			if (i + 1 < nex.length ())
-			{
-			if (nex.charAt(i) == '/' && nex.charAt(i+1) == '/')
-			{
-				
-				if(s.hasNextLine())
-				{
-				nex = s.nextLine();
-				lineNumber++;
-				colNumber = 0;
-				i = 0;
-				}
-				
-			}
-			
-			if (nex.charAt(i)  == '/'  && nex.charAt(i + 1) == '*' && on != 1)
-			
-				on = 1;
-			
-			
-			if (nex.charAt(i)  == '*'  && nex.charAt(i + 1) == '/' && on == 1)
-			
-				on = 0;
-			
-			
-			if (nex.charAt(i)  == '"'  && on != 2 ){
-				on = 2;}
-			
-			else
-				if(nex.charAt(i)  == '"'  && on == 2 && (nex.charAt(i-1) != '\\'))
-				{
-					on = 0;
-				}
-				
-			}
-			
-			
-			
-			
 			colNumber++;
 			char c = nex.charAt(i);
 			
-
+			// here it checks for comment lines and quotes, and flips the on switch if it has them
+			if (i != nex.length()-1){
+				if (nex.charAt(i) == '/' && nex.charAt(i+1) == '/'){
+					break;
+				}else if (nex.charAt(i)  == '/'  && nex.charAt(i + 1) == '*' && on != 1){
+					on = 1;
+				}else if (nex.charAt(i)  == '*'  && nex.charAt(i + 1) == '/' && on == 1){
+					on = 0;
+				}else if (nex.charAt(i)  == '"'  && on != 2 ){
+					on = 2;
+				}else if(nex.charAt(i)  == '"' && (nex.charAt(i - 1) != '\\' || on == 2)){
+					on = 0;
+				}else if(nex.charAt(i)  == '\'' && nex.charAt(i + 2) == '\''){
+					break;
+				}else if(nex.charAt(i)  == '\\'){
+					i++;
+					continue;
+				}
+			}
+			
 			//Can only check symbols if this equals 0
 			if(on == 0)
 			{
-		    //Here it checks the start symbol
-		    if (c == '(' || c == '{' || c == '[')
-		    {
-		    	switch(c)
-                {
-                    case '(':
-                    	stringcheck.push(c);        	
-        		    	symbolRead = c;
-        		    	symbolexpectedcheck.push(')');
-        		    	break;
-        		    	
-                    case '{':
-                    	if(i+1 < nex.length ())
-                    	{	
-                    		if(nex.charAt(i - 1) == '\'' && (nex.charAt(i+1) == '\''))
-                    		{
-                    		
-                    			break;
-                    		}	
-                    		else
-                        	{
-                        		stringcheck.push(c);
-                		    	symbolRead = c;
-                		    	symbolexpectedcheck.push('}');
-                		    	break;
-                        	}
-                    	}
-                    	else
-                    	{
-                    		stringcheck.push(c);
-            		    	symbolRead = c;
-            		    	symbolexpectedcheck.push('}');
-            		    	break;
-                    	}
-        		    	
-                    case '[':
-                    	stringcheck.push(c);
-        		    	symbolRead = c;
-        		    	symbolexpectedcheck.push(']');
-        		    	break;
-      
-        		   
-        		    	
-                    default:
-                        break;
-                }
-		    }
-			
-		    //here it checks the end symbol
-		    if (stringcheck.isEmpty() == false)
-		    {		    	
-		    if (c == ')' || c == '}' || c == ']')
-		    {
-		    		char symbolExpected = symbolexpectedcheck.peek(); 
-	                switch(c)
+			    //Here it checks the start symbol
+			    if (c == '(' || c == '{' || c == '[')
+			    {
+			    	switch(c)
 	                {
-	                    case ']':
-	                   
-	                    	if (stringcheck.peek() != '[')
-	                        {	        
-	                        	symbolRead = c;
-	                        	symbolexpectedcheck.push(c);
-	                    		s.close();
-	                            return unmatchedSymbol(lineNumber, colNumber, symbolRead, symbolExpected);
-	                        }
-	                        else
-	                        {
-	                        	symbolRead = c;
-	                        	stringcheck.pop();
-	                        	symbolexpectedcheck.pop();
-	                        	break;
-	                        }
-	                    case '}':
+	                    case '(':
+	                    	stringcheck.push(c);        	
+	        		    	symbolRead = c;
+	        		    	symbolexpectedcheck.push(')');
+	        		    	break;
+	        		    	
+	                    case '{':
+	                		stringcheck.push(c);
+	        		    	symbolRead = c;
+	        		    	symbolexpectedcheck.push('}');
+	        		    	break;
 	                    	
-	                    	if (stringcheck.peek() != '{' )
-	                        {
-	                        	symbolRead = c;
-	                    		s.close();
-	                        	return unmatchedSymbol(lineNumber, colNumber, symbolRead, symbolExpected);
-	                        }
-	                        else
-	                        {
-	                        	symbolRead = c;
-	                        	stringcheck.pop();
-	                        	symbolexpectedcheck.pop();
-	                        	break;
-	                        }
-	                    case ')':
-	                    	
-	                    	if (stringcheck.peek() != '(')
-	                        {
-	                        	symbolRead = c;
-	                    		s.close();
-	                        	return unmatchedSymbol(lineNumber, colNumber, symbolRead, symbolExpected);
-	                        }
-	                        else
-	                        {
-	                        	symbolRead = c;
-	                        	stringcheck.pop();
-	                        	symbolexpectedcheck.pop();
-	                        	break;
-	                        }
-
+	                    case '[':
+	                    	stringcheck.push(c);
+	        		    	symbolRead = c;
+	        		    	symbolexpectedcheck.push(']');
+	        		    	break;
+	        		    	
+	                    default:
+	                        break;
 	                }
-
-	                }
+			    }
+				
+			    //here it checks the end symbol	    	
+			    if (c == ')' || c == '}' || c == ']')
+			    {
+			    		if(stringcheck.isEmpty()){
+			    			s.close();
+			    			return unmatchedSymbol(lineNumber, colNumber, symbolRead, ' ');
+			    		}
+			    		
+			    		symbolExpected = symbolexpectedcheck.peek();
+			    		
+		                switch(c)
+		                {
+		                    case ']':
+		                   
+		                    	if (stringcheck.peek() != '[')
+		                        {	        
+		                        	symbolRead = c;
+		                    		s.close();
+		                            return unmatchedSymbol(lineNumber, colNumber, symbolRead, symbolExpected);
+		                        }
+		                        else
+		                        {
+		                        	symbolRead = c;
+		                        	stringcheck.pop();
+		                        	symbolexpectedcheck.pop();
+		                        	break;
+		                        }
+		                    case '}':
+		                    	
+		                    	if (stringcheck.peek() != '{')
+		                        {
+		                        	symbolRead = c;
+		                    		s.close();
+		                        	return unmatchedSymbol(lineNumber, colNumber, symbolRead, symbolExpected);
+		                        }
+		                        else
+		                        {
+		                        	symbolRead = c;
+		                        	stringcheck.pop();
+		                        	symbolexpectedcheck.pop();
+		                        	break;
+		                        }
+		                    case ')':
+		                    	
+		                    	if (stringcheck.peek() != '(')
+		                        {
+		                        	symbolRead = c;
+		                    		s.close();
+		                        	return unmatchedSymbol(lineNumber, colNumber, symbolRead, symbolExpected);
+		                        }
+		                        else
+		                        {
+		                        	symbolRead = c;
+		                        	stringcheck.pop();
+		                        	symbolexpectedcheck.pop();
+		                        	break;
+		                        }
+	
+		                }
+			    }
 		    }
-
-		    }
+		 }
 		   
 		
-		}
-
-		}
+	}
+		
 		//While loop ends here
-	
-			
 		
 		if(on == 1)
 		{
@@ -233,10 +190,11 @@ public class BalancedSymbolChecker {
 			return allSymbolsMatch();
 		}
 		
+		
 		//Checks whether the stack is not empty.  
 		if(!stringcheck.isEmpty())
 		{
-			char symbolExpected = symbolexpectedcheck.peek(); 
+			symbolExpected = symbolexpectedcheck.peek(); 
 			Character lastString = stringcheck.peek();
 			switch(lastString)
             {
@@ -260,10 +218,10 @@ public class BalancedSymbolChecker {
             }
 			
 		}
-
+		
 		
 		//checks whether the stack is empty.
-		if(stringcheck.isEmpty() && symbolexpectedcheck.isEmpty())
+		if(stringcheck.isEmpty())
         {
 			s.close();
 			return allSymbolsMatch();
